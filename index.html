@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>FeathersJS ejemplo básico (Chat app)</title>
+    <link rel="stylesheet" href="//unpkg.com/feathers-chat@4.0.0/public/base.css">
+    <link rel="stylesheet" href="//unpkg.com/feathers-chat@4.0.0/public/chat.css">
+</head>
+
+<body>
+    <main id="main" class="container">
+        <h1>Bienvenid@ a Feathers</h1>
+        <form class="form" onsubmit="sendMessage(event.preventDefault())">
+            <input type="text" id="message-text" placeholder="Ingresar mensaje">
+            <button type="submit" class="button button-primary">Enviar</button>
+        </form>
+
+        <h2>Mensajes:</h2>
+    </main>
+
+    <script src="//unpkg.com/@feathersjs/client@^4.3.0/dist/feathers.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+    <script type="text/javascript">
+        const socket = io('http://localhost:8000');
+        const app = feathers();
+
+        app.configure(feathers.socketio(socket));
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('message-text');
+
+            await app.service('messages').create({
+                text: messageInput.value
+            });
+
+            messageInput.value = '';
+        }
+
+        function addMessage(message) {
+            document.getElementById('main').innerHTML += `<p>${message.text}</p>`;
+        }
+
+        const main = async() => {
+            const messages = await app.service('messages').find();
+
+            messages.forEach(addMessage);
+
+            app.service('messages').on('created', addMessage);
+        };
+
+        main();
+    </script>
+</body>
+
+</html>
