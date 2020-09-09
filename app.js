@@ -1,5 +1,8 @@
 const feathers = require('@feathersjs/feathers');
-const app = feathers();
+const express = require('@feathersjs/express');
+const socketio = require('@feathersjs/socketio');
+
+const app = express(feathers());
 
 class MessageService {
     constructor() {
@@ -42,4 +45,26 @@ const main = async () => {
     console.log('All messages', messages);
 };
 
-main();
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+app.use(express.static(__dirname));
+app.configure(express.rest());
+app.configure(socketio());
+
+app.use('/messages', new MessageService());
+
+app.use(express.errorHandler());
+
+app.on('connection', connection => 
+    app.channel('everybody').join(connection)
+);
+
+app.publish(data => app.channel('everybody'));
+
+app.listen(8000).on('listening', () =>
+    console.log('Feathers server listening on localhost:8000')
+);
+
+app.service('messages').create({
+    text: 'Hello world from the server'
+});
